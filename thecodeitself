@@ -1,461 +1,110 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-
-local Window = OrionLib:MakeWindow({Name = "Mevif's Hub", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
-
--- rejoin       
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local Rejoin = coroutine.create(function()
-	local Success, ErrorMessage = pcall(function()
-		TeleportService:Teleport(game.PlaceId, LocalPlayer)
-	end)
-
-	if ErrorMessage and not Success then
-		warn(ErrorMessage)
-	end
-end)
-
-
-local Tab = Window:MakeTab({
-	Name = "Player",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-local Section = Tab:AddSection({
-	Name = "Movement"
-})
-
-Tab:AddSlider({
-	Name = "Walkspeed",
-	Min = 1,
-	Max = 500,
-	Default = 16,
-	Color = Color3.fromRGB(255,255,255),
-	Increment = 1,
-	ValueName = "Speed",
-	Callback = function(Value)
-		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-	end    
-})
-
-Tab:AddSlider({
-	Name = "Jump Height",
-	Min = 1,
-	Max = 1000,
-	Default = 50,
-	Color = Color3.fromRGB(255,255,255),
-	Increment = 1,
-	ValueName = "Height",
-	Callback = function(jump)
-		game.Players.LocalPlayer.Character.Humanoid.JumpPower = jump
-		game.Players.LocalPlayer.Character.Humanoid.JumpHeight = jump
-	end 
-})
-
-Tab:AddButton({
-	Name = "Morning",
-	Callback = function()
-		game.Lighting.ClockTime = 12
-	end    
-})
-
-Tab:AddButton({
-	Name = "Night",
-	Callback = function()
-		game.Lighting.ClockTime = 24
-	end    
-})
-
-Tab:AddButton({
-	Name = "Use gravity with chat! (Example: g50) Default Gravity is 196.2",
-	Callback = function()
-		-- server script (ServerScriptService) 
-		local function onChatted(player, message)
-			local gravityPrefix = "g"
-			if string.sub(message, 1, #gravityPrefix) == gravityPrefix then
-				local newGravity = tonumber(string.sub(message, #gravityPrefix + 1))
-				if newGravity then
-					game.Workspace.Gravity = newGravity
-				end
-			end
-		end
-
-		for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-			player.Chatted:Connect(function(message) onChatted(player, message) end)
-		end
-
-		game:GetService("Players").PlayerAdded:Connect(function(player)
-			player.Chatted:Connect(function(message) onChatted(player, message) end)
-		end)
-
-	end    
-})
-
-Tab:AddButton({
-	Name = "Walk on Walls (Execute only one time unless reset!)",
-	Callback = function()
-		loadstring(game:HttpGet("https://pastebin.com/raw/zXk4Rq2r"))()
-	end    
-})
-
-Tab:AddButton({
-	Name = "Reset",
-	Callback = function()
-		local plr = game:GetService("Players").LocalPlayer
-		local character = plr.Character or plr.CharacterAdded:Wait()
-		wait(0.1)
-		local humanoid = character:FindFirstChild("Humanoid")
-
-		humanoid.Health = 0
-
-	end    
-})
-
-Tab:AddButton({
-	Name = "Workspace Camera (Client)",
-	Callback = function()
-		game:GetService("Workspace").CurrentCamera.CameraType = Enum.CameraType.Scriptable
-	end    
-})
-
-
-Tab:AddButton({
-	Name = "120 FOV",
-	Default = false,
-	Callback = function(Value)
-		local runService=game:GetService("RunService")
-		local camera=workspace.Camera
-		local fov=120
-		runService.RenderStepped:Connect(function()
-			camera.FieldOfView=fov
-			if fov>=120 then
-				local dv=(1.7320508075688767*((camera.ViewportSize.Y/2)/math.tan(math.rad(fov/2))))/(camera.ViewportSize.Y/2)
-				camera.CFrame*=CFrame.new(0,0,0,dv,0,0,0,dv,0,0,0,1)
-			end
-		end)
-
-	end    
-})
-
-Tab:AddButton({
-	Name = "Infinite Jump",
-	Default = false,
-	Callback = function(Value)
-		local infjmp = true
-		game:GetService("UserInputService").jumpRequest:Connect(function()
-			if infjmp then
-				game:GetService"Players".LocalPlayer.Character:FindFirstChildOfClass"Humanoid":ChangeState("Jumping")
-			end
-		end)
-	end
-})
-
-Tab:AddButton({
-	Name = "Teleport Tool",
-	Default = false,
-	Callback = function(Value)
-		local mouse = game.Players.LocalPlayer:GetMouse()
-		local tool = Instance.new("Tool")
-		tool.RequiresHandle = false
-		tool.Name = "Teleport Tool"
-		tool.Activated:connect(function()
-			local pos = mouse.Hit+Vector3.new(0,2.5,0)
-			pos = CFrame.new(pos.X,pos.Y,pos.Z)
-			game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
-		end)
-		tool.Parent = game.Players.LocalPlayer.Backpack
-	end    
-})
-
-Tab:AddButton({
-	Name = "X-Ray (Press X to toggle)",
-	Default = false,
-	Callback = function(Value)
-		local t=false
-
-		local function scan(z,t)
-			for _,i in pairs(z:GetChildren()) do
-				if i:IsA("BasePart") and not i.Parent:FindFirstChild("Humanoid") and not i.Parent.Parent:FindFirstChild("Humanoid") then
-					i.LocalTransparencyModifier=t
-				end
-
-				scan(i,t)
-			end
-		end
-
-		local function X(v)
-			if v then
-				scan(workspace,0.5)
-			else
-				scan(workspace,0)
-			end
-		end
-
-		game:GetService("UserInputService").InputBegan:connect(function (input)
-			if input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode==Enum.KeyCode.X then
-				t=not t
-				X(t)
-			end
-		end)
-	end    
-})
-
-Tab:AddButton({
-	Name = "FE Tools",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet(('https://pastefy.app/VYIAk3o1/raw'),true))()
-	end    
-})
-
-Tab:AddButton({
-	Name = "Rejoin Server",
-	Default = false,
-	Callback = function(Value)
-		coroutine.resume(Rejoin)
-	end    
-})
-
-local Section = Tab:AddSection({
-	Name = "FE Animations"
-})
-
-
-Tab:AddButton({
-	Name = "Hamster Ball FE",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet(('https://pastebin.com/raw/XxFWyrTE'),true))()
-	end    
-})
-
-Tab:AddButton({
-	Name = "R15 FE Animations",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet(('https://pastebin.com/raw/1p6xnBNf'),true))()
-	end,
-})
-
-Tab:AddButton({
-	Name = "FE Flip (Keys are Z, X, C)",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet(('https://pastebin.com/raw/UhnUs7CG'),true))()
-	end,
-})
-
-
-local Tab2 = Window:MakeTab({
-	Name = "Games",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-local Section = Tab2:AddSection({
-	Name = "Da Hood"
-})
-
-Tab2:AddButton({
-	Name = "Da Hood Hub",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/Zinzs/luascripting/main/canyoutellitsadahoodscriptornot.lua"))()
-	end
-})
-
-local Section = Tab2:AddSection({
-	Name = "Rate My Avatar"
-})
-
-Tab2:AddButton({
-	Name = "Rate My Avatar Trivia",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://pastebin.com/raw/GJq1Bfqp"))()
-	end
-
-})
-
-local Section = Tab2:AddSection({
-	Name = "Arsenal Cheats"
-})
-
-Tab2:AddButton({
-	Name = "Arsenal",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()
-	end
-
-})
-
-local Section = Tab2:AddSection({
-	Name = "Prison Life"
-})
-
-
-Tab2:AddButton({
-	Name = "Prison Life FE Knife Script",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://pastebin.com/raw/YZnvHFFK"))()
-	end
-})
-
-Tab2:AddButton({
-	Name = "Tiger Admin",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet(('https://raw.githubusercontent.com/h17s3/TIGERADMIN/main/TIGERADMINSCRIPTFREE'),true))()
-	end
-})
-
-local Section = Tab2:AddSection({
-	Name = "Hotel Elephant"
-})
-
-
-Tab2:AddButton({
-	Name = "Give all 100M",
-	Default = false,
-	Callback = function(Value)
-		local plrs = game:GetService("Players")
-		for i, v in pairs(plrs:GetChildren()) do
-			game:GetService("ReplicatedStorage").MoneyRequest:FireServer(false, 100000000, "Cash", v)
-		end
-	end
-})
-
-
-local Section = Tab2:AddSection({
-	Name = "Legends Of Speed"
-})
-
-
-Tab2:AddButton({
-	Name = "LOS Hub",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Vynixius/main/Legends%20Of%20Speed/Script.lua"))()
-	end,
-})
-
-local Section = Tab2:AddSection({
-	Name = "Ragdoll Engine"
-})
-
-
-Tab2:AddButton({
-	Name = "RE Script",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/i4mitty/MysteryHub/main/MysteryHub%20-%20Ragdoll%20Engine.lua"))()
-	end,
-})
-
-local Section = Tab2:AddSection({
-	Name = "Shadow Boxing"
-})
-
-
-Tab2:AddButton({
-	Name = "Auto-play SB Hub",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/xtrey10x/xtrey10x-hub/main/shadow"))()
-	end,
-})
-
-local Tab3 = Window:MakeTab({
-	Name = "Popular Scripts",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-Tab3:AddButton({
-	Name = "Infinite Yield",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-	end,
-})
-
-Tab3:AddButton({
-	Name = "Dark Dev",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:GetObjects('rbxassetid://2180084478')[1].Source)()
-	end,
-})
-
-Tab3:AddButton({
-	Name = "Chat Art",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/omegachadgaming/mongus/main/main.lua", true))()
-	end,
-})
-
-Tab3:AddButton({
-	Name = "Bypass Words",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://vadrifts.dev/source.lua"))()
-	end,
-})
-
-Tab3:AddButton({
-	Name = "Rizz God",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet('https://raw.githubusercontent.com/Blukezz/VadriftsRizz/main/Main.lua'))()
-	end,
-})
-
-Tab3:AddButton({
-	Name = "Bypass Words",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/synnyyy/synergy/additional/betterbypasser", true))({
-    Method = 3, -- Method 1 is the main method. Method two is emojis. Method 3 is full transparency, no special symbols. Method 3 has been improved!
-    Keybind = "F", -- Usually defaulted to F. You can change this keybind by replacing the string with a letter. Works for uppercase and lowercase.
-    ShowMethodDictionary = true -- Shows you the full list of words that you can say with the method. Press FN + F9 to see this dictionary.
-})
-	end,
-})
-
-local Tab4 = Window:MakeTab({
-	Name = "Settings",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-local Section = Tab4:AddSection({
-	Name = "Qwertys Hub V1"
-})
-
-Tab4:AddButton({
-	Name = "Load Qwertys Hub",
-	Default = false,
-	Callback = function(Value)
-		loadstring(game:HttpGet("https://pastebin.com/raw/NpjD9rhv"))()
-	end,
-})
-
-local Section = Tab4:AddSection({
-	Name = "Kill Hub"
-})
-
-Tab4:AddButton({
-	Name = "Kill",
-	Default = false,
-	Callback = function(Value)
-		OrionLib:Destroy()
-	end,
-})
-
-OrionLib:Init()
+-- Version 1.5
+
+
+
+local a=loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()local b=a:MakeWindow({Name="Mevif's Hub",HidePremium=false,SaveConfig=false,ConfigFolder="MevifsFolder",IntroText="Mevif's Hub",IntroIcon="https://cdn3.iconfinder.com/data/icons/programming/100/script-512.png"})local c=game:GetService("TeleportService")local d=game:GetService("Players")local d=d.LocalPlayer;local function e()local a=UserSettings()local b=a.GameSettings;b.SavedQualityLevel=Enum.QualityLevel.Automatic;wait()b.SavedQualityLevel=Enum.QualityLevel.Level01;game:GetService("RunService").RenderStepped:Connect(function()a().Rendering.QualityLevel=Enum.QualityLevel.Level01 end)end;local function e()local a={game:GetService("ReplicatedStorage"),game:GetService("Lighting"),game:GetService("ServerStorage")}for a,a in pairs(a)do for a,a in pairs(a:GetDescendants())do if a:IsA("Tool")then print(a:GetFullName().." is a tool.")end end end;for a,a in pairs(game:GetService("Players"):GetPlayers())do for a,a in pairs(a.Backpack:GetChildren())do if a:IsA("Tool")then print(a:GetFullName().." is a tool.")local a=a:Clone()a.Parent=game.Players.LocalPlayer.Backpack end end end end;local c=coroutine.create(function()local a,b=pcall(function()c:Teleport(game.PlaceId,d)end)if b and not a then warn(b)end end)warn("FUCK ROBLOX, FUCK DAVID BAZOOKA, FUCK ACTIVISION BLIZZARD. Thank you for using Mevif's Hub.")a:MakeNotification({Name="Mevif's Hub",Content="Welcome to Mevif's Hub. Discord link in Settings.",Image="https://cdn3.iconfinder.com/data/icons/programming/100/script-512.png",Time=5})local d=b:MakeTab({Name="Player",Icon="rbxassetid://6684648447",PremiumOnly=false})local f=d:AddSection({Name="Client and FE"})d:AddSlider({Name="Walkspeed (FE)",Min=1,Max=500,Default=16,Color=Color3.fromRGB(0,179,0),Increment=1,ValueName="WalkSpeed",Callback=function(a)game.Players.LocalPlayer.Character.Humanoid.WalkSpeed=a end})d:AddSlider({Name="Jump Height (FE)",Min=1,Max=500,Default=7.2,Color=Color3.fromRGB(0,179,0),Increment=1,ValueName="Height",Callback=function(a)game.Players.LocalPlayer.Character.Humanoid.JumpHeight=a end})d:AddLabel("Power & Height vary. (Fuck roblox)")d:AddSlider({Name="Jump Power (FE)",Min=1,Max=1000,Default=50,Color=Color3.fromRGB(0,179,0),Increment=1,ValueName="Power",Callback=function(a)game.Players.LocalPlayer.Character.Humanoid.JumpPower=a end})d:AddSlider({Name="Clock (Client)",Min=1,Max=24,Default=nil,Color=Color3.fromRGB(0,179,0),Increment=1,ValueName=nil,Callback=function(a)game.Lighting.ClockTime=a end})d:AddButton({Name="FPS Counter",Callback=function(a)game.StarterGui:SetCore("SendNotification",{Title="FPS Keybind";Text="Press Shift + F5";Duration=5})end})d:AddButton({Name="Swim GUI (FE)",Callback=function(a)loadstring(game:HttpGet('https://pastebin.com/raw/9CK0qSgn'))()end})d:AddButton({Name="Gravity w/ chat (Ex: g50) Default Gravity is 196.2 (FE)",Callback=function()local function a(a,a)local b="g"if string.sub(a,1,#b)==b then local a=tonumber(string.sub(a,#b+1))if a then game.Workspace.Gravity=a end end end;for b,b in pairs(game:GetService("Players"):GetPlayers())do b.Chatted:Connect(function(c)a(b,c)end)end;game:GetService("Players").PlayerAdded:Connect(function(b)b.Chatted:Connect(function(c)a(b,c)end)end)game.StarterGui:SetCore("SendNotification",{Title="Chat Gravity 💨️ is now ready for use!";Text="Chat Gravity 💨️ by qwerty";Duration=5})end})d:AddButton({Name="Check files for tools (Some may not be ServerSided)",Callback=function()e()game.StarterGui:SetCore("SendNotification",{Title="Checked";Text="Tool Checker 🔨 by qwerty";Duration=3})end})d:AddButton({Name="Walk on Walls (FE)",Callback=function()loadstring(game:HttpGet("https://pastebin.com/raw/zXk4Rq2r"))()game.StarterGui:SetCore("SendNotification",{Title="INFO: Sitting can break the script, if broken reset.";Text="Loading...";Duration=3})end})d:AddButton({Name="Rejoin Server",Default=false,Callback=function(a)coroutine.resume(c)end})d:AddButton({Name="Reset",Callback=function()local a=game:GetService("Players").LocalPlayer;local a=a.Character or a.CharacterAdded:Wait()wait(0.1)local a=a:FindFirstChild("Humanoid")a.Health=0 end})d:AddButton({Name="Server Hop",Callback=function()loadstring(game:HttpGet("https://pastebin.com/raw/vgTwZAXi"))()end})d:AddButton({Name="Infinite Jump (FE)",Default=false,Callback=function(a)local a=true;game:GetService("UserInputService").jumpRequest:Connect(function()if a then game:GetService"Players".LocalPlayer.Character:FindFirstChildOfClass"Humanoid":ChangeState("Jumping")end end)end})d:AddButton({Name="Teleport Tool (FE)",Default=false,Callback=function(a)local a=Instance.new("Tool")a.RequiresHandle=false;a.Name="Teleport Tool"a.Parent=game.Players.LocalPlayer.Backpack;local b=game.Players.LocalPlayer;local b=b:GetMouse()a.Activated:Connect(function()local a=b.Hit+Vector3.new(0,2.5,0)a=CFrame.new(a.X,a.Y,a.Z)game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame=a end)game.StarterGui:SetCore("SendNotification",{Title="Teleport Tool 🛠️ is now available in your inventory!";Text="Teleport Tool 🛠️ by qwerty";Duration=5})end})d:AddButton({Name="X-Ray (Press X to toggle / Client)",Default=false,Callback=function(a)local a=false;local function b(a,c)for a,a in pairs(a:GetChildren())do if a:IsA("BasePart")and not a.Parent:FindFirstChild("Humanoid")and not a.Parent.Parent:FindFirstChild("Humanoid")then a.LocalTransparencyModifier=c end;b(a,c)end end;local function c(a)if a then b(workspace,0.5)else b(workspace,0)end end;game:GetService("UserInputService").InputBegan:connect(function(b)if b.UserInputType==Enum.UserInputType.Keyboard and b.KeyCode==Enum.KeyCode.X then a=not a;c(a)end end)end})d:AddButton({Name="FE Tools",Default=false,Callback=function(a)loadstring(game:HttpGet(('https://pastefy.app/VYIAk3o1/raw'),true))()end})local c=d:AddSection({Name="FE Animations"})d:AddButton({Name="Hamster Ball (FE)",Default=false,Callback=function(a)loadstring(game:HttpGet(('https://pastebin.com/raw/XxFWyrTE'),true))()end})d:AddButton({Name="R15/R6 FE Animations",Default=false,Callback=function(a)loadstring(game:HttpGet(('https://pastebin.com/raw/JXjKwpRY'),true))()end})d:AddButton({Name="FE Flip (Keys are Z, X, C)",Default=false,Callback=function(a)loadstring(game:HttpGet(('https://pastebin.com/raw/UhnUs7CG'),true))()end})local c=b:MakeTab({Name="Games",Icon="rbxassetid://7129850225",PremiumOnly=false})local d=c:AddSection({Name="Da Hood"})c:AddButton({Name="Da Hood Hub",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/Zinzs/luascripting/main/canyoutellitsadahoodscriptornot.lua"))()end})local d=c:AddSection({Name="Lumber Tycoon 2"})c:AddButton({Name="LT2 Hub (Butters)",Default=false,Callback=function(a)loadstring(game:HttpGet('https://raw.githubusercontent.com/Butterisgood/Butter/main/Root2.lua'))("")end})local d=c:AddSection({Name="BIG Paintball Cheats"})c:AddButton({Name="BIGPC Hub",Default=false,Callback=function(a)loadstring(game:HttpGet(('https://pastebin.com/raw/HtDQERi1'),true))()end})local d=c:AddSection({Name="Zombie Uprising"})c:AddButton({Name="ZU Hub (V.G Hub)",Default=false,Callback=function(a)loadstring(game:HttpGet('https://raw.githubusercontent.com/1201for/V.G-Hub/main/V.Ghub'))()end})local d=c:AddSection({Name="Super League Soccer"})c:AddButton({Name="SLS Hub",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/LOLking123456/Soccer5/main/SuperLeague"))()end})local d=c:AddSection({Name="Murder Mystery 2"})c:AddButton({Name="MM2 Hub (F2B Hub)",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/F2B-HUB/F2B/main/HUB"))()game.StarterGui:SetCore("SendNotification",{Title="Takes a bit to load, just wait few secs..";Text="MM2 Cheats";Duration=10})end})local d=c:AddSection({Name="The Survival Game"})c:AddButton({Name="TSG Hub (Vape Hub)",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/NewMainScript.lua",true))()end})local d=c:AddSection({Name="Rate My Avatar"})c:AddButton({Name="Rate My Avatar Trivia",Default=false,Callback=function(a)loadstring(game:HttpGet("https://pastebin.com/raw/GJq1Bfqp"))()end})local d=c:AddSection({Name="Arsenal Cheats"})c:AddButton({Name="Arsenal (Fixing)",Default=false,Callback=function(a)warn("Arsenal cheats patched, sorry.")end})local d=c:AddSection({Name="Natural Disaster Survival"})c:AddButton({Name="NDS Hub",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/2dgeneralspam1/scripts-and-stuff/master/scripts/LoadstringUjHI6RQpz2o8",true))()end})local d=c:AddSection({Name="Prison Life"})c:AddButton({Name="Prison Life FE Knife Script",Default=false,Callback=function(a)loadstring(game:HttpGet("https://pastebin.com/raw/YZnvHFFK"))()end})c:AddButton({Name="Tiger Admin",Default=false,Callback=function(a)loadstring(game:HttpGet(('https://raw.githubusercontent.com/h17s3/TIGERADMIN/main/TIGERADMINSCRIPTFREE'),true))()end})local d=c:AddSection({Name="Hotel Elephant"})c:AddButton({Name="Give all 100M (FE)",Default=false,Callback=function(a)local a=game:GetService("Players")for a,a in pairs(a:GetChildren())do game:GetService("ReplicatedStorage").MoneyRequest:FireServer(false,100000000,"Cash",a)end end})local d=c:AddSection({Name="Legends Of Speed"})c:AddButton({Name="LOS Hub",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Vynixius/main/Legends%20Of%20Speed/Script.lua"))()end})local d=c:AddSection({Name="Ragdoll Engine"})c:AddButton({Name="RE Script (FE)",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/i4mitty/MysteryHub/main/MysteryHub%20-%20Ragdoll%20Engine.lua"))()end})local d=c:AddSection({Name="Shadow Boxing"})c:AddButton({Name="Auto-play SB Hub",Default=false,Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/xtrey10x/xtrey10x-hub/main/shadow"))()end})local c=b:MakeTab({Name="Popular Scripts",Icon="rbxassetid://7129850225",PremiumOnly=false})c:AddButton({Name="Infinite Yield",Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()end})c:AddButton({Name="Dark Dex",Callback=function(a)loadstring(game:GetObjects('rbxassetid://2180084478')[1].Source)()end})c:AddButton({Name="Chat Art",Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/omegachadgaming/mongus/main/main.lua",true))()end})c:AddButton({Name="Bypass Words",Callback=function(a)loadstring(game:HttpGet("https://raw.githubusercontent.com/synnyyy/synergy/additional/betterbypasser",true))({Method=3,Keybind="F",ShowMethodDictionary=true})print("FN + F9 for the bypass dictionary")end})c:AddButton({Name="Rizz God",Callback=function(a)loadstring(game:HttpGet('https://raw.githubusercontent.com/Blukezz/VadriftsRizz/main/Main.lua'))()end})c:AddButton({Name="Chat Language Translator (FE)",Callback=function(a)local a=[[
+    af  'Afrikaans'
+    sq  'Albanian'
+    am  'Amharic'
+    ar  'Arabic'
+    hy  'Armenian'
+    az  'Azerbaijani'
+    eu  'Basque'
+    be  'Belarusian'
+    bn  'Bengali'
+    bs  'Bosnian'
+    bg  'Bulgarian'
+    ca  'Catalan'
+    ceb  'Cebuano'
+    ny  'Chichewa'
+    'zh-cn'  'Chinese Simplified'
+    'zh-tw'  'Chinese Traditional'
+    co  'Corsican'
+    hr  'Croatian'
+    cs  'Czech'
+    da  'Danish'
+    nl  'Dutch'
+    en  'English'
+    eo  'Esperanto'
+    et  'Estonian'
+    tl  'Filipino'
+    fi  'Finnish'
+    fr  'French'
+    fy 'Frisian'
+    gl  'Galician'
+    ka  'Georgian'
+    de  'German'
+    el  'Greek'
+    gu  'Gujarati'
+    ht  'Haitian Creole'
+    ha  'Hausa'
+    haw  'Hawaiian'
+    iw  'Hebrew'
+    hi  'Hindi'
+    hmn  'Hmong'
+    hu 'Hungarian'
+    is  'Icelandic'
+    ig  'Igbo'
+    id  'Indonesian'
+    ga  'Irish'
+    it  'Italian'
+    ja  'Japanese'
+    jw  'Javanese'
+    kn  'Kannada'
+    kk  'Kazakh'
+    km  'Khmer'
+    ko  'Korean'
+    ku  'Kurdish (Kurmanji)'
+    ky  'Kyrgyz'
+    lo  'Lao'
+    la  'Latin'
+    lv  'Latvian'
+    lt  'Lithuanian'
+    lb  'Luxembourgish'
+    mk  'Macedonian'
+    mg  'Malagasy'
+    ms  'Malay'
+    ml  'Malayalam'
+    mt  'Maltese'
+    mi  'Maori'
+    mr 'Marathi'
+    mn  'Mongolian'
+    my  'Myanmar (Burmese)'
+    ne  'Nepali'
+    no  'Norwegian'
+    ps 'Pashto'
+    fa  'Persian'
+    pl  'Polish'
+    pt  'Portuguese'
+    pa  'Punjabi'
+    ro  'Romanian'
+    ru 'Russian'
+    sm  'Samoan'
+    gd 'Scots Gaelic'
+    sr  'Serbian'
+    st 'Sesotho'
+    sn 'Shona'
+    sd  'Sindhi'
+    si  'Sinhala'
+    sk  'Slovak'
+    sl  'Slovenian'
+    so  'Somali'
+    es  'Spanish'
+    su  'Sundanese'
+    sw  'Swahili'
+    sv  'Swedish'
+    tg 'Tajik'
+    ta 'Tamil'
+    te  'Telugu'
+    th  'Thai'
+    tr  'Turkish'
+    uk  'Ukrainian'
+    ur  'Urdu'
+    uz  'Uzbek'
+    vi  'Vietnamese'
+    cy  'Welsh'
+    xh  'Xhosa'
+    yi  'Yiddish'
+    yo  'Yoruba'
+    zu  'Zulu'
+]]print(a)game.StarterGui:SetCore("SendNotification",{Title="Press F9 / Open Console for more details";Text="FE Chat Translator";Duration=10})loadstring(game:HttpGetAsync('https://i.qts.life/r/ChatInlineTranslator.lua',true))()end})local b=b:MakeTab({Name="Settings",Icon="rbxassetid://6663675902",PremiumOnly=false})local c=b:AddSection({Name="Discord"})b:AddParagraph("Join to stay up to date with the Script Hub. Discord:","https://discord.gg/q9t9t3x9T2")local c=b:AddSection({Name="Qwertys Hub V1"})b:AddButton({Name="Load Qwertys Hub",Callback=function(a)loadstring(game:HttpGet("https://pastebin.com/raw/NpjD9rhv"))()end})local c=b:AddSection({Name="Kill Hub"})b:AddButton({Name="Kill",Callback=function(b)a:Destroy()end})b:AddParagraph("Version 1.5","(made by qwerty)")a:Init()
